@@ -26,7 +26,7 @@ Nenhuma dependência externa, biblioteca ou linguagem adicional é necessária.
 
 | Arquivo | Conteúdo |
 |---|---|
-| `prj4_ddl_postgresql.sql` | DDL completo: schema `prj4`, 19 tabelas, constraints, função e triggers de auditoria, comentários (`COMMENT ON`) |
+| `prj4_ddl.sql` | DDL completo: schema `prj4`, 19 tabelas, constraints, função e triggers de auditoria, comentários (`COMMENT ON`) |
 | `prj4_comments.sql` | Complemento do dicionário de dados: `COMMENT ON COLUMN` das colunas restantes (cobertura 100%) |
 | `prj4_acessos.sql` | Níveis de acesso (DCL): quatro perfis (DBA, sistema, análise, backup) com permissões, conforme a política de privacidade (PPP2) |
 | `prj4_teste_acessos.sql` | Teste (opcional) que comprova as restrições de acesso: leitura liberada no perfil análise, escrita recusada, e auditoria (`AU_OPERACAO`) protegida contra adulteração pelo perfil sistema |
@@ -65,7 +65,7 @@ Copie os scripts para dentro do contêiner e execute-os na ordem:
 docker cp . prj4-pg:/tmp/prj4/
 
 # executa na ordem (DDL -> comentários -> acessos -> população -> índices)
-docker exec -i prj4-pg psql -U postgres -d prj4db -v ON_ERROR_STOP=1 -f /tmp/prj4/prj4_ddl_postgresql.sql
+docker exec -i prj4-pg psql -U postgres -d prj4db -v ON_ERROR_STOP=1 -f /tmp/prj4/prj4_ddl.sql
 docker exec -i prj4-pg psql -U postgres -d prj4db -v ON_ERROR_STOP=1 -f /tmp/prj4/prj4_comments.sql
 docker exec -i prj4-pg psql -U postgres -d prj4db -v ON_ERROR_STOP=1 -f /tmp/prj4/prj4_acessos.sql
 docker exec -i prj4-pg psql -U postgres -d prj4db -v ON_ERROR_STOP=1 -f /tmp/prj4/prj4_populacao.sql
@@ -117,7 +117,7 @@ a população carrega os dados e os índices são criados sobre as tabelas já p
 
 ```bash
 # 1. Estrutura (schema, tabelas, constraints, auditoria)
-psql -d prj4db -v ON_ERROR_STOP=1 -f prj4_ddl_postgresql.sql
+psql -d prj4db -v ON_ERROR_STOP=1 -f prj4_ddl.sql
 
 # 2. Complemento do dicionário de dados
 psql -d prj4db -v ON_ERROR_STOP=1 -f prj4_comments.sql
