@@ -29,7 +29,8 @@ Nenhuma dependência externa, biblioteca ou linguagem adicional é necessária.
 | `prj4_ddl_postgresql.sql` | DDL completo: schema `prj4`, 19 tabelas, constraints, função e triggers de auditoria, comentários (`COMMENT ON`) |
 | `prj4_comments.sql` | Complemento do dicionário de dados: `COMMENT ON COLUMN` das colunas restantes (cobertura 100%) |
 | `prj4_acessos.sql` | Níveis de acesso (DCL): quatro perfis (DBA, sistema, análise, backup) com permissões, conforme a política de privacidade (PPP2) |
-| `prj4_populacao_skew.sql` | Carga de dados em SQL nativo com distribuição enviesada (*skew*); `TB_EGRESSO` e `TB_PRODUCAO_CIENTIFICA` com 6.000 registros cada |
+| `prj4_teste_acessos.sql` | Teste (opcional) que comprova as restrições de acesso: leitura liberada no perfil análise, escrita recusada, e auditoria (`AU_OPERACAO`) protegida contra adulteração pelo perfil sistema |
+| `prj4_populacao.sql` | Carga de dados em SQL nativo com distribuição enviesada; `TB_EGRESSO` e `TB_PRODUCAO_CIENTIFICA` com 6.000 registros cada |
 | `prj4_consultas_intermediarias.sql` | 10 consultas intermediárias (QI01–QI10) |
 | `prj4_consultas_avancadas.sql` | 20 consultas avançadas (QA01–QA20) |
 | `prj4_indices.sql` | 24 índices justificados (plano de indexação) |
@@ -67,9 +68,14 @@ docker cp . prj4-pg:/tmp/prj4/
 docker exec -i prj4-pg psql -U postgres -d prj4db -v ON_ERROR_STOP=1 -f /tmp/prj4/prj4_ddl_postgresql.sql
 docker exec -i prj4-pg psql -U postgres -d prj4db -v ON_ERROR_STOP=1 -f /tmp/prj4/prj4_comments.sql
 docker exec -i prj4-pg psql -U postgres -d prj4db -v ON_ERROR_STOP=1 -f /tmp/prj4/prj4_acessos.sql
-docker exec -i prj4-pg psql -U postgres -d prj4db -v ON_ERROR_STOP=1 -f /tmp/prj4/prj4_populacao_skew.sql
+docker exec -i prj4-pg psql -U postgres -d prj4db -v ON_ERROR_STOP=1 -f /tmp/prj4/prj4_populacao.sql
 docker exec -i prj4-pg psql -U postgres -d prj4db -v ON_ERROR_STOP=1 -f /tmp/prj4/prj4_indices.sql
 ```
+
+> Opcional: comprovar os níveis de acesso (imprime os `NOTICE` de recusa):
+> ```bash
+> docker exec -i prj4-pg psql -U postgres -d prj4db -f /tmp/prj4/prj4_teste_acessos.sql
+> ```
 
 ### 3. Consultas, metadados e benchmark
 
@@ -119,8 +125,8 @@ psql -d prj4db -v ON_ERROR_STOP=1 -f prj4_comments.sql
 # 3. Níveis de acesso (perfis e permissões)
 psql -d prj4db -v ON_ERROR_STOP=1 -f prj4_acessos.sql
 
-# 4. População com skew
-psql -d prj4db -v ON_ERROR_STOP=1 -f prj4_populacao_skew.sql
+# 4. População
+psql -d prj4db -v ON_ERROR_STOP=1 -f prj4_populacao.sql
 
 # 5. Plano de indexação
 psql -d prj4db -v ON_ERROR_STOP=1 -f prj4_indices.sql
@@ -154,6 +160,17 @@ psql -d prj4db -f prj4_benchmark.sql
 
 Ao final, o banco permanece com os índices criados. Não é preciso seguir nenhuma
 ordem especial — pode ser rodado a qualquer momento após a população.
+
+### 6. Verificar os níveis de acesso (opcional)
+
+Comprova, no próprio SGBD, que os perfis restringem a escrita conforme a PPP2.
+Roda dentro de uma transação com `ROLLBACK` (não altera o banco) e imprime os
+`NOTICE` de recusa: o perfil análise lê mas não escreve, e o perfil sistema não
+consegue inserir, alterar nem apagar registros de `AU_OPERACAO`.
+
+```bash
+psql -d prj4db -f prj4_teste_acessos.sql
+```
 
 ## Notas de modelagem
 
